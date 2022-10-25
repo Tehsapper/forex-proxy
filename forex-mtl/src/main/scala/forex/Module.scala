@@ -5,14 +5,16 @@ import forex.config.ApplicationConfig
 import forex.http.rates.RatesHttpRoutes
 import forex.programs._
 import forex.services._
+import forex.services.rates.interpreters.OneFrameApiClient
 import org.http4s._
 import org.http4s.client.Client
 import org.http4s.implicits._
 import org.http4s.server.middleware.{AutoSlash, Timeout}
+import fs2.Stream
 
 class Module[F[_]: Concurrent: Timer](config: ApplicationConfig, httpClient: Client[F]) {
-
-  private val ratesService: RatesService[F] = RatesServices.live[F](config.oneFrame, httpClient)
+  private val oneFrameApiClient: OneFrameApiClient[F] = new OneFrameApiClient[F](httpClient, config.oneFrame.api)
+  private val ratesService: RatesService[F] = RatesServices.live[F](oneFrameApiClient, config.oneFrame.cache)
 
   private val ratesProgram: RatesProgram[F] = RatesProgram[F](ratesService)
 
@@ -32,6 +34,9 @@ class Module[F[_]: Concurrent: Timer](config: ApplicationConfig, httpClient: Cli
   }
 
   private val http: HttpRoutes[F] = ratesHttpRoutes
+
+  def start: Stream[F, Unit] =
+    ratesService.start()
 
   val httpApp: HttpApp[F] = appMiddleware(routesMiddleware(http).orNotFound)
 

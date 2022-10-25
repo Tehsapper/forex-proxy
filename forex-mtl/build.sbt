@@ -63,8 +63,11 @@ libraryDependencies ++= Seq(
   Libraries.circeGenericExt,
   Libraries.circeParser,
   Libraries.pureConfig,
+  Libraries.scalaCacheCore,
+  Libraries.scalaCacheCatsEffect,
+  Libraries.scalaCacheCaffeine,
   Libraries.logback,
   Libraries.scalaTest        % Test,
   Libraries.scalaCheck       % Test,
-  Libraries.catsScalaCheck   % Test
+  Libraries.catsScalaCheck   % Test,
 )

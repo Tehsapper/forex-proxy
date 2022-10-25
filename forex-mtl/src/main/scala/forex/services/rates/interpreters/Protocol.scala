@@ -9,7 +9,7 @@ import io.circe.generic.extras.semiauto.deriveConfiguredDecoder
 object Protocol {
   implicit val configuration: Configuration = Configuration.default.withSnakeCaseMemberNames
 
-  final case class Rate(
+  final case class OneFrameRate(
      from: Currency,
      to: Currency,
      bid: Price,
@@ -18,7 +18,7 @@ object Protocol {
      timeStamp: Timestamp
   )
 
-  type RatesResponse = List[Rate]
+  type OneFrameRatesResponse = List[OneFrameRate]
 
-  implicit val rateDecoder: Decoder[Rate] = deriveConfiguredDecoder[Rate]
+  implicit val oneFrameRateDecoder: Decoder[OneFrameRate] = deriveConfiguredDecoder[OneFrameRate]
 }

@@ -1,11 +1,14 @@
 package forex.services.rates
 
-import cats.effect.Sync
-import forex.config.OneFrameApiConfig
-import interpreters._
-import org.http4s.client.Client
+import cats.effect.{Concurrent, Timer}
+import forex.config.OneFrameRateCacheConfig
+import forex.services.rates.cache.OneFrameRateCache
+import forex.services.rates.interpreters._
 
 object Interpreters {
-  def live[F[_]: Sync](config: OneFrameApiConfig, httpClient: Client[F]): Algebra[F] =
-    new OneFrameHttpClient[F](httpClient, config)
+  def live[F[_]: Timer: Concurrent](
+    oneFrameApiClient: OneFrameApiClient[F],
+    oneFrameRateCacheConfig: OneFrameRateCacheConfig
+  ): Algebra[F] =
+    new OneFrameRateCache[F](oneFrameApiClient, oneFrameRateCacheConfig)
 }

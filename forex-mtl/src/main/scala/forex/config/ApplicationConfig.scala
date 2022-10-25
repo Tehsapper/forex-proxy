@@ -1,10 +1,12 @@
 package forex.config
 
+import org.http4s.Uri
+
 import scala.concurrent.duration.FiniteDuration
 
 case class ApplicationConfig(
     http: HttpConfig,
-    oneFrame: OneFrameApiConfig
+    oneFrame: OneFrameConfig
 )
 
 case class HttpConfig(
@@ -13,8 +15,16 @@ case class HttpConfig(
     timeout: FiniteDuration
 )
 
+case class OneFrameConfig(
+    api: OneFrameApiConfig,
+    cache: OneFrameRateCacheConfig
+)
+
 case class OneFrameApiConfig(
-    // TODO: convert to URI
-    baseUrl: String,
+    baseUrl: Uri,
     token: String
+)
+
+case class OneFrameRateCacheConfig(
+    refreshPeriod: FiniteDuration
 )

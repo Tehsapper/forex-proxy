@@ -1,0 +1,14 @@
+services:
+  forex:
+    image: forex
+    build: .
+    ports:
+      - "8080:8080"
+    environment:
+      - ONE_FRAME_TOKEN=10dc303535874aeccc86a8251e6992f5
+      - ONE_FRAME_BASE_URL=http://oneframe:8080
+
+  oneframe:
+    image: paidyinc/one-frame
+    ports:
+      - "8081:8080"
