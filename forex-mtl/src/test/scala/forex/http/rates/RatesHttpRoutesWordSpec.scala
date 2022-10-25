@@ -10,7 +10,7 @@ import forex.programs.rates.errors.Error
 import forex.programs.rates.errors.Error.RateLookupFailed
 import io.circe._
 import io.circe.parser._
-import org.http4s.Status.{NotFound, Ok}
+import org.http4s.Status.{BadRequest, NotFound, Ok}
 import org.http4s.circe._
 import org.http4s.implicits._
 import org.http4s.{Method, Query, Request, Uri}
@@ -58,18 +58,34 @@ class RatesHttpRoutesWordSpec extends AnyWordSpec with Matchers {
       """))
     }
 
-    "return error if unsupported currency provided" in {
+    "return error for unsupported 'from' currency" in {
       val program = createDummyProgram(RateLookupFailed("").asLeft[Rate])
       val routes = createRoutes(program)
 
       val result = routes
-        .run(makeGetRatesRequest("XYZ", "YYY"))
+        .run(makeGetRatesRequest("XYZ", "JPY"))
         .unsafeRunSync()
 
-      result.status should equal (NotFound)
+      result.status should equal (BadRequest)
       result.as[Json].unsafeRunSync() should equal (json("""
         {
-          "error": "no exchange rate"
+          "error": "from - unsupported currency"
+        }
+      """))
+    }
+
+    "return error for unsupported 'to' currency" in {
+      val program = createDummyProgram(RateLookupFailed("").asLeft[Rate])
+      val routes = createRoutes(program)
+
+      val result = routes
+        .run(makeGetRatesRequest("JPY", "YYYY"))
+        .unsafeRunSync()
+
+      result.status should equal (BadRequest)
+      result.as[Json].unsafeRunSync() should equal (json("""
+        {
+          "error": "to - unsupported currency"
         }
       """))
     }

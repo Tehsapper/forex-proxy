@@ -5,10 +5,10 @@ import cats.implicits.catsSyntaxEitherId
 import forex.config.OneFrameApiConfig
 import forex.domain.Rate.Pair
 import forex.domain.{Currency, Price, Rate, Timestamp}
-import forex.services.rates.errors.Error.LookupFailure
 import forex.services.rates.interpreters.OneFrameApiClient
+import forex.services.rates.interpreters.errors.Error.{ApiError, LookupFailure}
 import fs2.Stream
-import org.http4s.Status.InternalServerError
+import org.http4s.Status.{BadRequest, InternalServerError}
 import org.http4s.client.Client
 import org.http4s.implicits.http4sLiteralsSyntax
 import org.http4s.{Header, Request, Response}
@@ -54,6 +54,19 @@ class OneFrameApiClientWordSpec extends AnyWordSpec with Matchers {
       val result = apiClient.get(List(Pair(Currency.USD, Currency.JPY))).unsafeRunSync()
 
       result should matchPattern { case Left(LookupFailure(_)) => }
+    }
+
+    "emit error in case of reached quota" in {
+      val httpClient = mockHttpClient(_ => Response[IO](status = BadRequest, body = Stream.emits("""
+          {
+            "error": "Quota reached"
+          }
+          """.getBytes("UTF-8"))))
+      val apiClient = new OneFrameApiClient[IO](httpClient, OneFrameApiConfig(uri"http://localhost", "auth_token"))
+
+      val result = apiClient.get(List(Pair(Currency.USD, Currency.JPY))).unsafeRunSync()
+
+      result should matchPattern { case Left(ApiError("Quota reached")) => }
     }
   }
 

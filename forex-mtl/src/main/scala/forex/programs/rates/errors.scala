@@ -10,7 +10,6 @@ object errors {
   }
 
   def toProgramError(error: RatesServiceError): Error = error match {
-    case RatesServiceError.LookupFailure(e) => Error.RateLookupFailed(e.getMessage)
     case RatesServiceError.NoRateFound(_) => Error.RateLookupFailed("no exchange rate")
   }
 

@@ -35,7 +35,8 @@ class OneFrameRateCache[F[_]: Timer: Concurrent](
       .concurrently(Stream.awakeEvery[F](config.refreshPeriod).evalMap(_ => refresh()))
       .handleErrorWith { e =>
         logger.error("failed to update cache", e)
-        start()
+        // TODO: more sophisticated retry policy (e.g. jitter + exponential backoff)
+        start().delayBy(config.retryPeriod)
       }
   }
 
@@ -49,6 +50,9 @@ class OneFrameRateCache[F[_]: Timer: Concurrent](
     for {
       result <- oneFrameApiClient.get(allCurrencyCombinations)
       rates <- Sync[F].fromEither(result)
+
+      // Unfortunately, TTL setting is broken in scalacache 0.28 (see https://github.com/cb372/scalacache/issues/522)
+      // It is fixed in pre-release 1.0.0-M5 version, but using it would require a massive dependencies update.
       _ <- rates.traverse(rate => scalacache.put(rate.pair)(rate))
       _ <- Sync[F].delay(logger.info("Updated cache"))
     } yield ()

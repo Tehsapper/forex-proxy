@@ -26,5 +26,7 @@ case class OneFrameApiConfig(
 )
 
 case class OneFrameRateCacheConfig(
-    refreshPeriod: FiniteDuration
+    refreshPeriod: FiniteDuration,
+    retryPeriod: FiniteDuration,
+    ttl: FiniteDuration
 )
