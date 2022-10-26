@@ -11,6 +11,10 @@ A Docker Compose manifest is provided to easily bring up both Forex proxy and lo
    ```shell
    docker compose up --build
    ```
+3. The proxy is now available at `localhost:8080`:
+   ```shell
+   curl http://localhost:8080/rates?from=USD&to=JPY
+   ```
 
 # Considerations
 
@@ -28,7 +32,7 @@ Then the requirements can be fulfilled by querying and caching all currency comb
 ## Feasibility
 
 In this case, there will be `(24 * 60 / 5) = 288` requests made per day by each Forex proxy instance to OneFrame API.
-Any Get Rates API request will be served this cached data, and an arbitrary number of requests can be served every day.
+Any Get Rates API request will be served this cached data, so an arbitrary number of requests can be served every day.
 
 There are `9*(9-1) = 72` currency pair combinations.
 Each requested pair is passed to OneFrame as a query parameter in `[?&]pair=XXXYYY` format, taking 12 octets each,
@@ -42,19 +46,23 @@ and `72 * 12 = 864` in total, which is far less than URL length limit of `8000` 
 Such cache is easier to set up, manage and reason about, compared to an external one (e.g. Redis).
 
 However, this means that exchange rates cache is not shared between proxy instances.
-This will be a problem if scalability is required -- only 3 proxy instances can be run in parallel with current implementation,
-consuming at least `864` OneFrame API requests per day.
-Also, if too many restarts are triggered, then API call limit might also be depleted.
+If scalability is required, then external distributed cache must be used --
+currently only 3 proxy instances can be run in parallel, consuming at least `864` OneFrame API requests per day.
+
+Additionally, if too many restarts are triggered, then API call limit might also be depleted.
 
 Refresh period is set to a bit lower duration (4:50) than desired TTL to compensate for possible network delays.
 
+All cached rates have TTL expiry of 5 minutes, in order not to serve stale data and to fulfill the requirements.
+
 ### Error Handling
 
-In current implementation, Forex proxy Rates requests have only one failure mode (rate cache miss, or "no exchange rate"),
-as all requests to OneFrame API are done in separate independent context.
+In current implementation, Forex proxy Rates requests have only one observable failure mode (rate cache miss, or "no exchange rate"),
+as all requests to OneFrame API are done in a separate, independent context.
 
-Observability could be possibly improved if Rates API returned last encountered error,
+Observability could be improved if Rates API returned last encountered error,
 though it is up to debate whether downstream clients should be aware of OneFrame quotas and its existence in general.
+For example, signalling that some cached currency rate has expired is not very useful.
 
 After all, it is probably best to leave mitigations to these problems to proxy itself, as it was created specifically to circumvent them. 
 And if Forex proxy is deemed a standalone currency exchange service, then OneFrame is merely an opaque upstream provider.
@@ -62,3 +70,6 @@ And if Forex proxy is deemed a standalone currency exchange service, then OneFra
 ### Response Timezone
 
 Currently, rate response reuses timezone provided by OneFrame service.
+It is not much of a concern, since timezone is still provided in timestamps.
+But it can be explicitly defined (e.g. UTC or JST), as otherwise it might be suddenly changed by upstream,
+which might become a surprise to downstream clients.

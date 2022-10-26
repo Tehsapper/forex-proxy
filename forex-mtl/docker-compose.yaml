@@ -1,3 +1,4 @@
+# This Docker Compose (v2) manifest brings up local dev environment.
 services:
   forex:
     image: forex

@@ -1,4 +1,4 @@
-package forex.services.rates.interpreters
+package forex.services.oneframe
 
 object errors {
 
@@ -8,7 +8,7 @@ object errors {
       override def getMessage: String = e.getMessage
     }
 
-    // might be worthwhile to also make this a sealed trait
+    // might be worthwhile to also make this a sealed trait, but OneFrame API spec is unknown.
     final case class ApiError(error: String) extends Error {
       override def getMessage: String = error
     }

@@ -79,7 +79,7 @@ class RatesHttpRoutesWordSpec extends AnyWordSpec with Matchers {
       val routes = createRoutes(program)
 
       val result = routes
-        .run(makeGetRatesRequest("JPY", "YYYY"))
+        .run(makeGetRatesRequest("JPY", "YYY"))
         .unsafeRunSync()
 
       result.status should equal (BadRequest)
@@ -91,6 +91,7 @@ class RatesHttpRoutesWordSpec extends AnyWordSpec with Matchers {
     }
   }
 
+  // There is a json literal, but seems to be provided by an extra circa dependency.
   private def json(raw: String): Json =
     parse(raw).getOrElse(Json.Null)
 

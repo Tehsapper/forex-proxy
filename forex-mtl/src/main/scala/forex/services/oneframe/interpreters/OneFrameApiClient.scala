@@ -1,4 +1,4 @@
-package forex.services.rates.interpreters
+package forex.services.oneframe.interpreters
 
 import cats.effect.Sync
 import cats.implicits._
@@ -6,18 +6,19 @@ import forex.config.OneFrameApiConfig
 import forex.domain.Rate
 import forex.domain.Rate.Pair
 import forex.http._
-import forex.services.rates.interpreters.errors.Error
-import forex.services.rates.interpreters.errors.Error.{ApiError, LookupFailure}
-import forex.services.rates.interpreters.Protocol.{OneFrameError, OneFrameRates, OneFrameResponse}
+import forex.services.oneframe.Algebra
+import forex.services.oneframe.errors.Error
+import forex.services.oneframe.errors.Error.{ApiError, LookupFailure}
+import forex.services.oneframe.interpreters.Protocol._
 import org.http4s.QueryParamEncoder._
 import org.http4s._
 import org.http4s.circe.CirceEntityCodec.circeEntityDecoder
 import org.http4s.client._
 
-class OneFrameApiClient[F[_]: Sync](httpClient: Client[F], config: OneFrameApiConfig) {
+class OneFrameApiClient[F[_]: Sync](httpClient: Client[F], config: OneFrameApiConfig) extends Algebra[F] {
   private val ratesUrl = config.baseUrl.addPath("/rates")
 
-  def get(pairs: List[Rate.Pair]): F[Error Either List[Rate]] =
+  override def get(pairs: List[Rate.Pair]): F[Error Either List[Rate]] =
     httpClient
       .fetchAs[OneFrameResponse](makeRequest(pairs))
       .map {
